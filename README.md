@@ -1,3 +1,5 @@
+# JSpider (version: 1.0)
+
 # What
 JSpider is clone of a classical Spider Solitaire game from older versions of Microsoft Windows.
 It implements almost all features of the Windows version of Spider Solitaire.
