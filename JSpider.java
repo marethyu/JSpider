@@ -66,6 +66,9 @@ import javax.swing.UnsupportedLookAndFeelException;
  * TODO:
  * - Play game 10 times in a row to catch any potential bugs (make sure you say yes to the dialog for new game and try undo, restart, and newGame buttons)
  * - Animations?
+ * 
+ * Changes:
+ * - 7/6/2019: fixed a score bug
  */
 @SuppressWarnings("serial")
 public class JSpider extends JFrame implements ActionListener, ComponentListener, WindowListener {
@@ -135,7 +138,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 		about.addActionListener(this);
 		exit.addActionListener(this);
 		
-		toggleDebugMode.setEnabled(false);
+		// toggleDebugMode.setEnabled(false);
 		
 		menu.add(newGame);
 		menu.add(restartGame);
@@ -738,7 +741,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 			}
 		}
 		
-		private void showPlayAgainDialog() {
+		private boolean showPlayAgainDialog() {
 			int[] a = tracker.getData(difficulty);
 			
 			a[0] = Math.max(a[0], score);
@@ -749,10 +752,13 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 			
 			if (resp == JOptionPane.YES_OPTION) {
 				newGame();
-			} else {
-				tracker.writeToFile();
-				System.exit(0);
+				return true;
 			}
+			
+			tracker.writeToFile();
+			System.exit(0);
+			
+			return false; // it will never be reached
 		}
 		
 		private boolean checkForCardsToRemove(int index) {
@@ -895,7 +901,10 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 							if (allCards.size() == 104) {
 								movingPile = null;
 								repaint();
-								showPlayAgainDialog();
+								
+								if (showPlayAgainDialog()) {
+									return;
+								}
 							}
 						}
 						
