@@ -138,7 +138,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 		about.addActionListener(this);
 		exit.addActionListener(this);
 		
-		// toggleDebugMode.setEnabled(false);
+		toggleDebugMode.setEnabled(false);
 		
 		menu.add(newGame);
 		menu.add(restartGame);
