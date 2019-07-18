@@ -57,7 +57,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 /**
- * JSpider (version: 1.0)
+ * JSpider (version: 1.01)
  * By Jimmy Y. (June 25, 2019 to July 3, 2019)
  * 
  * Problems:
@@ -68,6 +68,9 @@ import javax.swing.UnsupportedLookAndFeelException;
  * - Animations?
  * 
  * Changes:
+ * - 7/17/2019: reset current difficulty only
+ * - 7/17/2019: fixed deal, after deal, check for cards to remove
+ * - 7/13/2019: added new rule, cannot undo after cards removed
  * - 7/6/2019: fixed a score bug
  */
 @SuppressWarnings("serial")
@@ -98,7 +101,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 	
 	private boolean debug;
 	
-	{
+	static {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
@@ -219,7 +222,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 		} else if (source == restartGame) {
 			board.resetGame();
 		} else if (source == undo) {
-			if (board.canUndo()) { board.undo(); }
+			board.undo();
 		} else if (source == deal) {
 			board.deal();
 		} else if (source == changeDifficulty) {
@@ -251,9 +254,9 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 				label3.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 				label4.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 				
-				JButton button = new JButton("reset all");
+				JButton button = new JButton("Reset");
 				button.addActionListener(evt -> {
-					tracker.resetAll();
+					tracker.reset(difficulty);
 					dialog.dispose();
 				});
 				button.setAlignmentX(JComponent.CENTER_ALIGNMENT);
@@ -485,7 +488,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 		}
 		
 		public boolean canUndo() {
-			return !undoStack.empty() && !undoStack.peek().dealed();
+			return !undoStack.empty() && !undoStack.peek().isFlagged();
 		}
 		
 		public void resetGame() {
@@ -538,6 +541,12 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 			deck[top--] = null;
 			undoStack.push(new GameState());
 			undo.setEnabled(false);
+			
+			for (int i = 0; i < piles; i++) {
+				if (checkForCardsToRemove(i)) {
+					score += 100;
+				}
+			}
 			
 			repaint();
 		}
@@ -879,6 +888,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 		public void mouseReleased(MouseEvent e) {
 			if (movingPile != null) {
 				boolean success = false;
+				boolean b = false;
 				
 				Card firstCard = movingPile.get(0);
 				Card lastCard = movingPile.get(movingPile.size() - 1);
@@ -897,6 +907,9 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 						
 						if (checkForCardsToRemove(i)) {
 							score += 100;
+							undoStack.push(new GameState());
+							undo.setEnabled(false);
+							b = true;
 							
 							if (allCards.size() == 104) {
 								movingPile = null;
@@ -939,7 +952,9 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 					score--;
 					moves++;
 					
-					undo.setEnabled(true);
+					if (!b) {
+						undo.setEnabled(true);
+					}
 				}
 				
 				fixPile(index);
@@ -985,10 +1000,10 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 			private int top;
 			private int ptr;
 			
-			private boolean dealed;
+			private boolean flag;
 			
 			public GameState() {
-				dealed = true;
+				flag = true;
 			}
 			
 			@SuppressWarnings("unchecked")
@@ -1026,7 +1041,7 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 				this.top = top;
 				this.ptr = ptr;
 				
-				dealed = false;
+				flag = false;
 			}
 			
 			public List<Card> getAllCards() {
@@ -1049,8 +1064,8 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 				return ptr;
 			}
 			
-			public boolean dealed() {
-				return dealed;
+			public boolean isFlagged() {
+				return flag;
 			}
 		}
 	}
@@ -1066,11 +1081,9 @@ public class JSpider extends JFrame implements ActionListener, ComponentListener
 			readData();
 		}
 		
-		public void resetAll() {
-			for (String difficulty : new String[]{"Easy", "Medium", "Hard"}) {
-				int[] a = getData(difficulty);
-				Arrays.fill(a, 0);
-			}
+		public void reset(String difficulty) {
+			int[] a = getData(difficulty);
+			Arrays.fill(a, 0);
 		}
 		
 		public void writeToFile() {
