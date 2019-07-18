@@ -57,7 +57,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 /**
- * JSpider (version: 1.01)
+ * JSpider (version: 1.1)
  * By Jimmy Y. (June 25, 2019 to July 3, 2019)
  * 
  * Problems:
